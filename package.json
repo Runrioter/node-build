@@ -11,7 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/reddit/node-build.git"
+    "url": "https://github.com/Runrioter/node-build.git"
   },
   "keywords": [
     "webpack",
@@ -21,9 +21,10 @@
     "babel"
   ],
   "author": "schwers",
+  "contributors": ["Runrioter Wung <runrioter@qq.com>"],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/reddit/node-build/issues"
+    "url": "https://github.com/Runrioter/node-build/issues"
   },
   "dependencies": {
     "autoprefixer": "^6.3.6",
@@ -69,5 +70,5 @@
   "peerDependencies": {
     "source-map-support": "~0.4.0"
   },
-  "homepage": "https://github.com/reddit/node-build/#readme"
+  "homepage": "https://github.com/Runrioter/node-build/#readme"
 }
