@@ -3,6 +3,7 @@ var fs = require('fs');
 var path = require('path');
 
 var _ = require('lodash');
+var yargs = require('yargs');
 var Mocha = require('mocha');
 var colors = require('colors');
 var rimraf = require('rimraf');
@@ -14,31 +15,35 @@ var configs = require('../lib/configs');
 var getWebpackEntryForTest = require('../lib/getWebpackEntryForTest');
 var uploadToSentry = require('../lib/uploadToSentry');
 
-var argv = require('yargs')
+var argv = yargs
   .alias('b', 'blueprintsPath')
-    .describe('b', 'path to a raw-config via a node file with moduel.exports = config')
+    .describe('b', 'path to a raw-config via a node file with module.exports = config')
     .default('b', './blueprints.config.js')
   .alias('p', 'production')
     .describe('p', 'enable production settings for the default build configs')
     .default('p', false)
   .alias('c', 'client')
-    .describe('c', 'use the default client build, assumes you have an entry point to a client at ~/lib/client.[some es6.js or .js or .jsx]')
+    .describe('c', 'use the default client build, assumes you have an entry point to a client at ~/lib/client.[es6.js|js|jsx]')
     .default('c', false)
   .alias('s', 'server')
-    .describe('s', 'use the default server build, assumes you have an entry point to a server at ~/lib/server[some es6.js or .js or .jsx]')
+    .describe('s', 'use the default server build, assumes you have an entry point to a server at ~/lib/server.[es6.js|js|jsx]')
     .default('s', false)
   .alias('a', 'clientAndServer')
-    .describe('a', '[DEFAULT=true] use both a client and a server build. checks if you have an extend build and applies it.')
+    .describe('a', 'use both a client and a server build. checks if you have an extend build and applies it.')
     .default('a', true)
   .alias('w', 'watch')
-    .describe('w', '[DEFAULT=false] force watching of all builds')
+    .describe('w', 'force watching of all builds')
     .default('w', false)
   .alias('i', 'ignoreBlueprints')
-    .describe('ignore the blueprints.config.js file in the current directory and use defaults')
+    .describe('i', 'ignore the blueprints.config.js file in the current directory and use defaults')
     .default('i', false)
   .alias('t', 'runTest')
-    .describe('search for test files and run them')
+    .describe('t', 'search for test files and run them')
     .default('t', false)
+  .help()
+    .alias('h', 'help')
+  .version()
+  .wrap(yargs.terminalWidth())
   .argv;
 
 function loadBlueprintsFromPath(filePath, isProduction) {
