@@ -1,3 +1,5 @@
 node_modules/
 GzipSimpleHTTPServer/
 .DS_Store
+.vscode
+examples/client/build

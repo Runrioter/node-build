@@ -3,7 +3,8 @@
   "version": "0.14.3",
   "description": "A webpack based build system that can make UMD modules, (soon)peer-dependent library builds, server 'binarys', or full client ready scripts",
   "scripts": {
-    "lint": "eslint lib"
+    "lint": "eslint lib",
+    "test:client": "cd ./examples/client && ../../bin/buildBlueprints.js -p -c"
   },
   "bin": {
     "blueprints": "./bin/buildBlueprints.js",
@@ -61,16 +62,19 @@
     "yargs": "^8.0.2"
   },
   "devDependencies": {
-    "babel-cli": "^6.7.5",
-    "babel-eslint": "^6.0.4",
-    "eslint": "^2.8.0",
-    "eslint-plugin-babel": "^3.2.0",
-    "eslint-plugin-react": "^5.1.1",
+    "babel-cli": "^6.24.1",
+    "babel-eslint": "^7.2.3",
+    "eslint": "^4.3.0",
+    "eslint-plugin-babel": "^4.1.2",
+    "eslint-plugin-react": "^7.1.0",
     "react": "^15.0.2",
     "react-dom": "^15.0.2"
   },
   "peerDependencies": {
     "source-map-support": "~0.4.0"
   },
-  "homepage": "https://github.com/Runrioter/node-build/#readme"
+  "homepage": "https://github.com/Runrioter/node-build/#readme",
+  "engines": {
+    "node": ">= 6.0.0"
+  }
 }

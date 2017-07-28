@@ -1,55 +1,54 @@
 #!/usr/bin/env node
-var fs = require('fs');
-var path = require('path');
+const path = require('path');
+const _ = require('lodash');
+const yargs = require('yargs');
+const Mocha = require('mocha');
+const colors = require('colors');
+const rimraf = require('rimraf');
+const mochaNotifier = require('mocha-notifier-reporter');
 
-var _ = require('lodash');
-var yargs = require('yargs');
-var Mocha = require('mocha');
-var colors = require('colors');
-var rimraf = require('rimraf');
-var mochaNotifier = require('mocha-notifier-reporter');
+const build = require('../lib/build');
+const makeBuild = require('../lib/makeBuild').makeBuild;
+const configs = require('../lib/configs');
+const getWebpackEntryForTest = require('../lib/getWebpackEntryForTest');
+const uploadToSentry = require('../lib/uploadToSentry');
 
-var build = require('../lib/build');
-var makeBuild = require('../lib/makeBuild').makeBuild;
-var configs = require('../lib/configs');
-var getWebpackEntryForTest = require('../lib/getWebpackEntryForTest');
-var uploadToSentry = require('../lib/uploadToSentry');
-
-var argv = yargs
+const argv = yargs
   .alias('b', 'blueprintsPath')
-    .describe('b', 'path to a raw-config via a node file with module.exports = config')
-    .default('b', './blueprints.config.js')
+  .describe('b', 'path to a raw-config via a node file with module.exports = config')
+  .default('b', './blueprints.config.js')
   .alias('p', 'production')
-    .describe('p', 'enable production settings for the default build configs')
-    .default('p', false)
+  .describe('p', 'enable production settings for the default build configs')
+  .default('p', false)
   .alias('c', 'client')
-    .describe('c', 'use the default client build, assumes you have an entry point to a client at ~/lib/client.[es6.js|js|jsx]')
-    .default('c', false)
+  .describe('c', 'use the default client build, assumes you have an entry point to a client at ~/lib/client.[es6.js|js|jsx]')
+  .default('c', false)
   .alias('s', 'server')
-    .describe('s', 'use the default server build, assumes you have an entry point to a server at ~/lib/server.[es6.js|js|jsx]')
-    .default('s', false)
+  .describe('s', 'use the default server build, assumes you have an entry point to a server at ~/lib/server.[es6.js|js|jsx]')
+  .default('s', false)
   .alias('a', 'clientAndServer')
-    .describe('a', 'use both a client and a server build. checks if you have an extend build and applies it.')
-    .default('a', true)
+  .describe('a', 'use both a client and a server build. checks if you have an extend build and applies it.')
+  .default('a', true)
   .alias('w', 'watch')
-    .describe('w', 'force watching of all builds')
-    .default('w', false)
+  .describe('w', 'force watching of all builds')
+  .default('w', false)
   .alias('i', 'ignoreBlueprints')
-    .describe('i', 'ignore the blueprints.config.js file in the current directory and use defaults')
-    .default('i', false)
+  .describe('i', 'ignore the blueprints.config.js file in the current directory and use defaults')
+  .default('i', false)
   .alias('t', 'runTest')
-    .describe('t', 'search for test files and run them')
-    .default('t', false)
+  .describe('t', 'search for test files and run them')
+  .default('t', false)
   .help()
-    .alias('h', 'help')
+  .alias('h', 'help')
   .version()
   .wrap(yargs.terminalWidth())
   .argv;
 
 function loadBlueprintsFromPath(filePath, isProduction) {
   try {
-    console.log('...loading blueprints from', filePath)
-    var builds = require(path.resolve(filePath));
+    filePath = path.resolve(filePath);
+    console.log(colors.green('[Loading blueprints from]'), filePath);
+    let builds = require(filePath);
 
     // build configuration files are written in js and can be:
     //   a) a function that takes isProduction (boolean) and returns an array of builds
@@ -69,16 +68,16 @@ function loadBlueprintsFromPath(filePath, isProduction) {
 
     return { builds };
   } catch (e) {
-    console.log(colors.red('Error in loading blueprints'), e);
+    console.log(colors.red('Error in loading blueprints: '), e.message);
     process.exit(1);
   }
 }
 
 function loadDefaultConfigs(options) {
-  console.log('...using default configs');
+  console.log(colors.green('[Using default configs]'));
   if (options.runTest) {
-    console.log('...Setting up tests:');
-    var config = _.merge(
+    console.log(colors.green('[Setting up tests:]'));
+    const config = _.merge(
       {},
       configs.getDefaultTestingConfig(),
       { webpack: { entry: getWebpackEntryForTest('./') } }
@@ -86,15 +85,15 @@ function loadDefaultConfigs(options) {
     return [ config ];
 
   } else if (options.client) {
-    console.log('...client');
+    console.log(colors.green('[client config]'));
     return [ configs.getClientConfig(options.production) ];
 
   } else if (options.server) {
-    console.log('...server');
+    console.log(colors.green('[server config]'));
     return [ configs.getServerConfig(options.production) ];
 
   } else if (options.clientAndServer) {
-    console.log('...both');
+    console.log(colors.green('[both client and server config]'));
     return [
       configs.getClientConfig(options.production),
       configs.getServerConfig(options.production),
@@ -104,11 +103,11 @@ function loadDefaultConfigs(options) {
 
 
 function makeConfig(options) {
-  var builds;
-  var extensions = {};
+  let builds;
+  let extensions = {};
 
   if (options.blueprintsPath && !options.ignoreBlueprints && !options.runTest) {
-    var blueprints = loadBlueprintsFromPath(options.blueprintsPath, options.production);
+    const blueprints = loadBlueprintsFromPath(options.blueprintsPath, options.production);
 
     if (blueprints.extensions) {
       extensions = blueprints.extensions;
@@ -142,15 +141,16 @@ function shouldUploadToSentry(sentryProject, buildName) {
   );
 }
 
-console.log('...Reading Blueprints', argv.blueprintsPath);
-console.log('...cwd', process.cwd());
+console.log(colors.green('[Reading Blueprints]'), argv.blueprintsPath);
+console.log(colors.green('[Current Working Directory]'), process.cwd());
 
-var config = makeConfig(argv);
-var JS_REGEX = /.*\.js(\.map)?$/;
+const config = makeConfig(argv);
+
+const JS_REGEX = /.*\.js(\.map)?$/;
 // sentry does not currently support source maps for the server
 // so there is no point add server builds here.
 // see: https://github.com/getsentry/sentry/issues/2632
-var WHITELISTED_BUILD_NAMES = ['ProductionClient'];
+const WHITELISTED_BUILD_NAMES = ['ProductionClient'];
 
 build(config, function(buildName, stats) {
   if (stats.errors && stats.errors.length > 0 && !argv.watch) {
@@ -159,10 +159,10 @@ build(config, function(buildName, stats) {
   }
 
   // upload to Sentry if applicable
-  var build = config[buildName];
+  const build = config[buildName];
   if (shouldUploadToSentry(build.sentryProject, buildName)) {
-    var buildPath = build.webpackConfig.output.path;
-    var assets = stats.assets
+    const buildPath = build.webpackConfig.output.path;
+    const assets = stats.assets
       .filter(function(a) { return JS_REGEX.test(a.name); })
       .map(function(a) { return path.join(buildPath, a.name); });
 
@@ -176,9 +176,9 @@ build(config, function(buildName, stats) {
       '\n   ******************************'
     ));
 
-    m = new Mocha({ reporter: mochaNotifier.decorate('spec') });
+    const m = new Mocha({ reporter: mochaNotifier.decorate('spec') });
     stats.assets.forEach(function(asset) {
-      m.addFile('./.test/' + asset.name);
+      m.addFile(`./.test/${asset.name}`);
     });
     m.run();
 
@@ -193,7 +193,7 @@ build(config, function(buildName, stats) {
 // Hacky way to handle webpacks file output
 process.on('SIGINT', function() {
   if (argv.runTest) {
-    var testDirectory = configs.getDefaultTestingConfig().webpack.output.path;
+    const testDirectory = configs.getDefaultTestingConfig().webpack.output.path;
     rimraf(path.resolve(testDirectory), {}, process.exit);
   } else {
     process.exit();
