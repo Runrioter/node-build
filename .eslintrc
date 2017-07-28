@@ -8,7 +8,8 @@
     "browser": true,
     // in CommonJS
     "node": true,
-    "mocha": true
+    "mocha": true,
+    "es6": true
   },
 
   "extends": "eslint:recommended",
@@ -47,7 +48,7 @@
 
     // handle async/await functions correctly
     // handle object spread
-    "babel/object-shorthand": 1,
+    "object-shorthand": 1,
 
     // handle potential errors
     "brace-style": [2, "1tbs", { "allowSingleLine": true }],
