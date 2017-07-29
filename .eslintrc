@@ -137,6 +137,7 @@
 
     // es6-specific
     "prefer-template": 1,
+    "template-curly-spacing": 1,
     "no-var": 1,
     "constructor-super": 2,
     "prefer-const": 1,
